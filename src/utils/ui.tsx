@@ -122,3 +122,196 @@ export const Checkbox = React.forwardRef<
   );
 });
 Checkbox.displayName = 'Checkbox';
+
+// Tabs container component
+export const Tabs = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & {
+    defaultValue: string;
+    value?: string;
+    onValueChange?: (value: string) => void;
+  }
+>(({ className, defaultValue, value, onValueChange, ...props }, ref) => {
+  const [selectedTab, setSelectedTab] = React.useState(value || defaultValue);
+
+  React.useEffect(() => {
+    if (value !== undefined) {
+      setSelectedTab(value);
+    }
+  }, [value]);
+
+  const handleValueChange = (newValue: string) => {
+    setSelectedTab(newValue);
+    onValueChange?.(newValue);
+  };
+
+  return (
+    <div
+      className={cn('w-full', className)}
+      ref={ref}
+      data-value={selectedTab}
+      {...props}
+    />
+  );
+});
+Tabs.displayName = 'Tabs';
+
+// TabsList component - the container for tab triggers
+export const TabsList = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => {
+  return (
+    <div
+      className={cn(
+        'flex items-center justify-start space-x-1 rounded-md bg-gray-100 p-1',
+        className
+      )}
+      ref={ref}
+      role="tablist"
+      {...props}
+    />
+  );
+});
+TabsList.displayName = 'TabsList';
+
+// TabsTrigger component - the clickable tab button
+export const TabsTrigger = React.forwardRef<
+  HTMLButtonElement,
+  React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    value: string;
+  }
+>(({ className, value, ...props }, ref) => {
+  const tabsContext = React.useContext(
+    React.createContext<{
+      value?: string;
+      onValueChange?: (value: string) => void;
+    }>({})
+  );
+
+  // Find nearest parent Tabs element to get the current selected value
+  const parentTabsElement = React.useRef<HTMLElement | null>(null);
+  const buttonRef = React.useRef<HTMLButtonElement | null>(null);
+  
+  React.useEffect(() => {
+    if (buttonRef.current) {
+      let element = buttonRef.current.parentElement;
+      while (element && !element.hasAttribute('data-value')) {
+        element = element.parentElement;
+      }
+      parentTabsElement.current = element;
+    }
+  }, []);
+
+  const isSelected = 
+    parentTabsElement.current?.getAttribute('data-value') === value ||
+    tabsContext.value === value;
+
+  const handleClick = () => {
+    const onValueChange = tabsContext.onValueChange;
+    if (onValueChange) {
+      onValueChange(value);
+    } else if (parentTabsElement.current) {
+      // Use a custom event if context is not available
+      parentTabsElement.current.setAttribute('data-value', value);
+      const event = new CustomEvent('tabChange', { detail: { value } });
+      parentTabsElement.current.dispatchEvent(event);
+    }
+  };
+
+  return (
+    <button
+      ref={(node) => {
+        if (ref) {
+          if (typeof ref === 'function') ref(node);
+          else ref.current = node;
+        }
+        buttonRef.current = node;
+      }}
+      role="tab"
+      aria-selected={isSelected}
+      data-state={isSelected ? 'active' : 'inactive'}
+      data-value={value}
+      className={cn(
+        'inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:pointer-events-none disabled:opacity-50',
+        isSelected
+          ? 'bg-white text-blue-700 shadow-sm'
+          : 'text-gray-700 hover:bg-gray-50',
+        className
+      )}
+      onClick={handleClick}
+      {...props}
+    />
+  );
+});
+TabsTrigger.displayName = 'TabsTrigger';
+
+// TabsContent component - the content panel activated by a tab
+export const TabsContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & {
+    value: string;
+  }
+>(({ className, value, ...props }, ref) => {
+  const tabsContext = React.useContext(
+    React.createContext<{
+      value?: string;
+    }>({})
+  );
+  
+  const contentRef = React.useRef<HTMLDivElement | null>(null);
+  const [isSelected, setIsSelected] = React.useState(false);
+  
+  React.useEffect(() => {
+    if (contentRef.current) {
+      let element = contentRef.current.parentElement;
+      while (element && !element.hasAttribute('data-value')) {
+        element = element.parentElement;
+      }
+      
+      if (element) {
+        const updateVisibility = () => {
+          const currentValue = element!.getAttribute('data-value');
+          setIsSelected(currentValue === value);
+        };
+        
+        updateVisibility();
+        
+        // Listen for custom tab change events
+        const handleTabChange = () => {
+          updateVisibility();
+        };
+        
+        element.addEventListener('tabChange', handleTabChange);
+        
+        return () => {
+          element?.removeEventListener('tabChange', handleTabChange);
+        };
+      }
+    }
+  }, [value]);
+  
+  if (!isSelected && tabsContext.value !== value) {
+    return null;
+  }
+  
+  return (
+    <div
+      ref={(node) => {
+        if (ref) {
+          if (typeof ref === 'function') ref(node);
+          else ref.current = node;
+        }
+        contentRef.current = node;
+      }}
+      role="tabpanel"
+      data-state={isSelected ? 'active' : 'inactive'}
+      className={cn(
+        'mt-2 ring-offset-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+        className
+      )}
+      {...props}
+    />
+  );
+});
+TabsContent.displayName = 'TabsContent';

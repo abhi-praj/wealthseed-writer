@@ -12,7 +12,7 @@ function parseSectionPlan(planText: string): Section[] {
     const cleaned = planText
       .replace(/```json|```/g, '')
       .trim();
-    console.log(cleaned)
+    
     const parsed = JSON.parse(cleaned);
 
     if (!Array.isArray(parsed)) throw new Error('Section plan must be an array');
@@ -76,7 +76,7 @@ Format:
 ]
 
 Constraints:
-- TOTAL word count must not exceed 8000 words across all sections combined
+- TOTAL word count should be above 8500 words across all sections combined but it should not exceed 10000 words across all sections combined
 - Do NOT include more than 10 sections
 - Do NOT repeat sections
 - Do NOT include any explanation or text outside the JSON array
@@ -92,7 +92,6 @@ Requirements: ${miscRequirements}
 Audience: Canadian high school or university students
 `;
 
-
         const planResponse = await cohere.chat({
           model: 'command-a-03-2025',
           messages: [
@@ -102,18 +101,18 @@ Audience: Canadian high school or university students
             },
             { role: 'user', content: planningPrompt }
           ],
-          max_tokens: 8000,
+          maxTokens: 8000,
           temperature: 0.4,
           stream: false
         });
-
+        console.log(planResponse);
         const rawPlanText = planResponse.message.content[0].text;
         const sections = parseSectionPlan(rawPlanText);
 
-        // --- Step 2: Generate Section Content ---
-        let compiledContent = `## Submodule: ${submodule}\n\n`;
+        // --- Step 2: Generate Section Content with proper Markdown formatting ---
+        let compiledContent = `# Submodule: ${submodule}\n\n`;
 
-        for (const section of sections) {
+        for (const [index, section] of sections.entries()) {
           const sectionPrompt = `
 Write a detailed section titled "${section.title}" for the submodule "${submodule}" in Canadian personal finance.
 
@@ -126,14 +125,28 @@ Requirements:
 - Include 5 multiple choice questions (MCQs)
 ${includeMathQuestions ? '- Include math-based examples or calculations where appropriate' : ''}
 - Section Summary: ${section.summary}
-          `;
+
+MARKDOWN FORMATTING REQUIREMENTS:
+- Use proper markdown syntax:
+  * Use ## for section headings (level 2)
+  * Use ### for subsection headings (level 3)
+  * Leave blank lines between paragraphs
+  * Use * or - for unordered lists
+  * Use 1. 2. 3. for ordered lists
+  * Use **bold** and *italic* for emphasis
+  * Use > for block-quotes
+  * Use proper markdown table syntax when needed
+  * Format code snippets and examples properly
+- Do NOT use HTML tags in your content, use only markdown
+- Ensure sufficient spacing between different content sections
+`;
 
           const sectionResponse = await cohere.chat({
             model: 'command-a-03-2025',
             messages: [
               {
                 role: 'system',
-                content: 'You are a professional Canadian personal finance textbook content writer.'
+                content: 'You are a professional Canadian personal finance textbook content writer who creates clean, properly formatted markdown. Your content should be well-structured using proper markdown syntax with correct headings, spacing, lists, tables, and emphasis.'
               },
               { role: 'user', content: sectionPrompt }
             ],
@@ -144,8 +157,15 @@ ${includeMathQuestions ? '- Include math-based examples or calculations where ap
             stream: false
           });
 
-          const sectionText = sectionResponse.message.content[0].text;
-          compiledContent += `\n\n### ${section.title}\n\n${sectionText}`;
+          const sectionText = sectionResponse.message.content[0].text.trim();
+          
+          // Add the section with proper spacing
+          compiledContent += `\n\n## ${section.title}\n\n${sectionText}`;
+          
+          // Add separator between sections (except for the last one)
+          if (index < sections.length - 1) {
+            compiledContent += '\n\n---\n';
+          }
         }
 
         finalSubmoduleOutputs[submodule] = compiledContent;

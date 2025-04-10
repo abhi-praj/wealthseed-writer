@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button, Input, Textarea, Label, Card, Checkbox } from '../utils/ui';
 
-
 interface ContentBuilderFormData {
   module: string;
   submodules: string;
@@ -31,35 +30,49 @@ export default function ContentBuilderMode({ apiKey }: ContentBuilderModeProps) 
       const submodulesArray = data.submodules.split('|').map(item => item.trim());
       const keywordsArray = data.keywords.split('|').map(item => item.trim());
 
+      console.log('Submitting form data:', {
+        module: data.module,
+        submodules: submodulesArray,
+        keywords: keywordsArray,
+        miscRequirements: data.miscRequirements,
+        includeMathQuestions: data.includeMathQuestions
+      });
+
       const response = await fetch('/api/cohere', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey
-          },
-          body: JSON.stringify({
-            mode: 'content-builder',
-            moduleData: {
-              module: data.module,
-              submodules: submodulesArray,
-              keywords: keywordsArray,
-              miscRequirements: data.miscRequirements,
-              includeMathQuestions: data.includeMathQuestions
-            }
-          })
-        });
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey
+        },
+        body: JSON.stringify({
+          mode: 'content-builder',
+          moduleData: {
+            module: data.module,
+            submodules: submodulesArray,
+            keywords: keywordsArray,
+            miscRequirements: data.miscRequirements,
+            includeMathQuestions: data.includeMathQuestions
+          }
+        })
+      });
 
-        if (!response.ok) {
-          console.log(response);
-          throw new Error('Failed to generate content');
-        }
-        
-        const { content: result } = await response.json();
+      console.log('API Response status:', response.status);
+      
+      const responseData = await response.json();
+      console.log('API Response data:', responseData);
 
-      setResponse(result);
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Failed to generate content');
+      }
+      
+      if (responseData.content) {
+        setResponse(responseData.content);
+      } else {
+        throw new Error('Invalid response format');
+      }
     } catch (err) {
-      setError('Error generating content. Please check your API key and try again.');
-      console.error(err);
+      console.error('Error details:', err);
+      setError(`Error generating content: ${err}`);
     } finally {
       setIsLoading(false);
     }
@@ -135,23 +148,22 @@ export default function ContentBuilderMode({ apiKey }: ContentBuilderModeProps) 
 
       {error && (
         <div className="p-4 bg-red-50 text-red-700 rounded-md">
-          {error}
+          <p className="font-medium">Error:</p>
+          <p>{error}</p>
         </div>
       )}
 
-      {response && (
-        <Card className="mt-6">
-          <h3 className="text-black text-lg font-medium mb-2">Generated Content</h3>
-          <div className="text-black prose max-w-none">
-            {Object.entries(response).map(([submodule, content]) => (
-              <div key={submodule} className="mb-8">
-                <h4 className="text-lg font-semibold mb-4">{submodule}</h4>
-                {content.split('\n').map((paragraph, index) => (
-                  <p key={index}>{paragraph}</p>
-                ))}
+      {Object.keys(response).length > 0 && (
+        <Card className="mt-6 p-6">
+          <h3 className="text-black text-xl font-medium mb-4">Generated Content</h3>
+          {Object.entries(response).map(([submodule, content]) => (
+            <div key={submodule} className="mb-8">
+              <h4 className="text-xl font-semibold mb-4 text-black">{submodule}</h4>
+              <div className="bg-gray-50 p-4 rounded-md overflow-auto max-h-[500px] border border-gray-200">
+                <pre className="text-black text-sm whitespace-pre-wrap">{content}</pre>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </Card>
       )}
     </div>
