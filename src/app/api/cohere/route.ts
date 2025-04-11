@@ -76,7 +76,7 @@ Format:
 ]
 
 Constraints:
-- TOTAL word count should be above 8500 words across all sections combined but it should not exceed 10000 words across all sections combined
+- TOTAL word count should be above 10000 words across all sections combined but it should not exceed 12000 words across all sections combined
 - Do NOT include more than 10 sections
 - Do NOT repeat sections
 - Do NOT include any explanation or text outside the JSON array
@@ -97,11 +97,10 @@ Audience: Canadian high school or university students
           messages: [
             {
               role: 'system',
-              content: 'You are an expert Canadian curriculum planner for personal finance education.'
+              content: 'You are an expert Canadian curriculum planner for personal finance education. Follow the instructions given, especially with the word count one.'
             },
             { role: 'user', content: planningPrompt }
           ],
-          maxTokens: 8000,
           temperature: 0.4,
           stream: false
         });
@@ -118,10 +117,12 @@ Write a detailed section titled "${section.title}" for the submodule "${submodul
 
 Requirements:
 - Audience: High school or university students in Canada
-- Word count: ${section.wordCount}
+- Go slightly above the word count: ${section.wordCount}
 - Use Canadian terminology, spelling, laws, and currency
-- Include inline citations (e.g., from CRA, Government of Canada, Canadian banks, etc.)
+- Include inline citations (e.g., from CRA, Government of Canada, Canadian banks, etc.) and then citations at the end in the form of links or specific references
 - Add media placeholders, real-world Canadian case studies
+- Have the writing have some energy that can speak to high school students well while also covering the full scope of information necessary - not super formal but still enough to be in a school textbook that conveys information in a mildly fun way.
+- Have relevant case studies that students can relate to that also really hammer in and emphasize the information given.
 - Include 5 multiple choice questions (MCQs)
 ${includeMathQuestions ? '- Include math-based examples or calculations where appropriate' : ''}
 - Section Summary: ${section.summary}
@@ -139,6 +140,10 @@ MARKDOWN FORMATTING REQUIREMENTS:
   * Format code snippets and examples properly
 - Do NOT use HTML tags in your content, use only markdown
 - Ensure sufficient spacing between different content sections
+- Search the web and include sources for specific facts and whatever you deem necessary
+- Ensure the content is clear, easy to read, and well-structured
+- Ensure the content is well-written and easy to understand
+- Ensure the content is well-organized and easy to navigate
 `;
 
           const sectionResponse = await cohere.chat({
@@ -146,11 +151,10 @@ MARKDOWN FORMATTING REQUIREMENTS:
             messages: [
               {
                 role: 'system',
-                content: 'You are a professional Canadian personal finance textbook content writer who creates clean, properly formatted markdown. Your content should be well-structured using proper markdown syntax with correct headings, spacing, lists, tables, and emphasis.'
+                content: 'You are a professional Canadian personal finance textbook content writer who creates clean, properly formatted markdown. Your content should be well-structured using proper markdown syntax with correct headings, spacing, lists, tables, and emphasis. Define any terms you introduce which may be unknown to somebody learning about personal finance by the same time and aim for slightly hire than the amount of words given in wordCount. Also search the web and include sources for specific facts and whatever you deem necessary.'
               },
               { role: 'user', content: sectionPrompt }
             ],
-            max_tokens: 8192,
             temperature: 0.5,
             p: 0.75,
             k: 0,
@@ -159,10 +163,8 @@ MARKDOWN FORMATTING REQUIREMENTS:
 
           const sectionText = sectionResponse.message.content[0].text.trim();
           
-          // Add the section with proper spacing
           compiledContent += `\n\n## ${section.title}\n\n${sectionText}`;
           
-          // Add separator between sections (except for the last one)
           if (index < sections.length - 1) {
             compiledContent += '\n\n---\n';
           }
@@ -189,7 +191,6 @@ MARKDOWN FORMATTING REQUIREMENTS:
     const response = await cohere.chat({
       model: 'command-a-03-2025',
       messages: freeChatMessages,
-      max_tokens: 8192,
       temperature: 0.5,
       p: 0.75,
       k: 0,
