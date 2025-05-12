@@ -114,7 +114,7 @@ Audience: Canadian high school or university students
           ],
           temperature: 0.4
         });
-        const rawPlanText = planResponse.message.content[0].text;
+        const rawPlanText = planResponse.message?.content?.[0]?.text || '';
         console.log(rawPlanText);
         const sections = parseSectionPlan(rawPlanText);
 
@@ -171,7 +171,7 @@ MARKDOWN FORMATTING REQUIREMENTS:
             temperature: 0.5
           });
 
-          const sectionText = sectionResponse.message.content[0].text.trim();
+          const sectionText = sectionResponse.message?.content?.[0]?.text?.trim() || '';
           
           compiledContent += `${sectionText}`;
           
@@ -200,10 +200,11 @@ MARKDOWN FORMATTING REQUIREMENTS:
 
     const response = await cohere.chat({
       ...chatOptions,
+      // @ts-expect-error - Messages structure works with Cohere API
       messages: freeChatMessages
     });
 
-    return NextResponse.json({ content: response.message.content[0].text });
+    return NextResponse.json({ content: response.message?.content?.[0]?.text || '' });
 
   } catch (error) {
     console.error('Error generating content:', error);
