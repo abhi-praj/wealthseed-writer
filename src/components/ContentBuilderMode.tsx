@@ -64,6 +64,7 @@ export default function ContentBuilderMode({ apiKey }: ContentBuilderModeProps) 
       console.log('API Response data:', responseData);
 
       if (!response.ok) {
+        console.log(responseData)
         throw new Error(responseData.error || 'Failed to generate content');
       }
       

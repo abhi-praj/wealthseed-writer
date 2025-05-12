@@ -55,7 +55,6 @@ export async function POST(request: NextRequest) {
       p: 0.75,
       k: 0,
       stream: false,
-      connectors: [{ id: 'web-search' }]
     };
 
     if (mode === 'content-builder' && moduleData) {
@@ -200,7 +199,7 @@ MARKDOWN FORMATTING REQUIREMENTS:
 
     const response = await cohere.chat({
       ...chatOptions,
-      // @ts-expect-error - Messages structure works with Cohere API
+      // @ts-ignore - Messages structure works with Cohere API
       messages: freeChatMessages
     });
 
