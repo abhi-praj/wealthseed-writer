@@ -21,6 +21,7 @@ export default function ContentBuilderMode({ apiKey }: ContentBuilderModeProps) 
   const [response, setResponse] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [enableWebSearch, setEnableWebSearch] = useState(false);
 
   const onSubmit = async (data: ContentBuilderFormData) => {
     setIsLoading(true);
@@ -46,6 +47,7 @@ export default function ContentBuilderMode({ apiKey }: ContentBuilderModeProps) 
         },
         body: JSON.stringify({
           mode: 'content-builder',
+          enableWebSearch: enableWebSearch,
           moduleData: {
             module: data.module,
             submodules: submodulesArray,
@@ -138,6 +140,17 @@ export default function ContentBuilderMode({ apiKey }: ContentBuilderModeProps) 
           />
           <Label htmlFor="includeMathQuestions" className="cursor-pointer">
             Include inline math questions where appropriate (recommended for topics like taxes, interest rates, etc.)
+          </Label>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox 
+            id="enableWebSearch" 
+            checked={enableWebSearch}
+            onCheckedChange={(checked) => setEnableWebSearch(checked as boolean)}
+          />
+          <Label htmlFor="enableWebSearch" className="cursor-pointer">
+            Enable web search for up-to-date information and citations
           </Label>
         </div>
 

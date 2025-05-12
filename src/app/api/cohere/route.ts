@@ -39,7 +39,8 @@ function parseSectionPlan(planText: string): Section[] {
 
 export async function POST(request: NextRequest) {
   try {
-    const { prompt, mode, moduleData } = await request.json();
+    const { prompt, mode, moduleData, enableWebSearch = false } = await request.json();
+    console.log(enableWebSearch);
     const apiKey = request.headers.get('x-api-key') || process.env.NEXT_PUBLIC_COHERE_API_KEY;
 
     if (!apiKey) {
@@ -47,6 +48,15 @@ export async function POST(request: NextRequest) {
     }
 
     const cohere = new CohereClientV2({ token: apiKey });
+    
+    const chatOptions = {
+      model: 'command-r',
+      temperature: 0.5,
+      p: 0.75,
+      k: 0,
+      stream: false,
+      connectors: [{ id: 'web-search' }]
+    };
 
     if (mode === 'content-builder' && moduleData) {
       const { module, submodules, keywords, miscRequirements, includeMathQuestions } = moduleData;
@@ -93,6 +103,7 @@ Audience: Canadian high school or university students
 `;
 
         const planResponse = await cohere.chat({
+          ...chatOptions,
           model: 'command-a-03-2025',
           messages: [
             {
@@ -101,11 +112,10 @@ Audience: Canadian high school or university students
             },
             { role: 'user', content: planningPrompt }
           ],
-          temperature: 0.4,
-          stream: false
+          temperature: 0.4
         });
-        console.log(planResponse);
         const rawPlanText = planResponse.message.content[0].text;
+        console.log(rawPlanText);
         const sections = parseSectionPlan(rawPlanText);
 
         // --- Step 2: Generate Section Content with proper Markdown formatting ---
@@ -121,8 +131,12 @@ Requirements:
 - Use Canadian terminology, spelling, laws, and currency
 - Include inline citations (e.g., from CRA, Government of Canada, Canadian banks, etc.) and then citations at the end in the form of links or specific references
 - Add media placeholders, real-world Canadian case studies
-- Have the writing have some energy that can speak to high school students well while also covering the full scope of information necessary - not super formal but still enough to be in a school textbook that conveys information in a mildly fun way.
-- Have relevant case studies that students can relate to that also really hammer in and emphasize the information given.
+- Have the writing have some energy that can speak to high school students well while also covering the full scope of information necessary - not super formal but still enough to be in a school textbook that conveys information in a mildy fun way. Don't be corny though please.
+- Don't Hallucinate things you are unsure of - get good sources and search the web for specific facts. Avoid repetition of content and sentences as much as possible.
+- Feel free to make tables and other things in Markdown that can really make things more impactful
+- Have relevant case studies that students can relate to that also really hammer in and emphasize the information given. Make them long and relevant and really focus on the HOW more than the what. Focus on how they relate, the exact situations and don't repeat case studies.
+- Avoid repetitive language.
+- From time to time feel free to address the reader directly using language like "you" and other second person terms to deliver impact.
 - Include 5 multiple choice questions (MCQs)
 ${includeMathQuestions ? '- Include math-based examples or calculations where appropriate' : ''}
 - Section Summary: ${section.summary}
@@ -140,30 +154,26 @@ MARKDOWN FORMATTING REQUIREMENTS:
   * Format code snippets and examples properly
 - Do NOT use HTML tags in your content, use only markdown
 - Ensure sufficient spacing between different content sections
-- Search the web and include sources for specific facts and whatever you deem necessary
 - Ensure the content is clear, easy to read, and well-structured
 - Ensure the content is well-written and easy to understand
 - Ensure the content is well-organized and easy to navigate
 `;
 
           const sectionResponse = await cohere.chat({
-            model: 'command-a-03-2025',
+            ...chatOptions,
             messages: [
               {
                 role: 'system',
-                content: 'You are a professional Canadian personal finance textbook content writer who creates clean, properly formatted markdown. Your content should be well-structured using proper markdown syntax with correct headings, spacing, lists, tables, and emphasis. Define any terms you introduce which may be unknown to somebody learning about personal finance by the same time and aim for slightly hire than the amount of words given in wordCount. Also search the web and include sources for specific facts and whatever you deem necessary.'
+                content: 'You are a professional Canadian personal finance textbook content writer who creates clean, properly formatted markdown. Your content should be well-structured using proper markdown syntax with correct headings, spacing, lists, tables, and emphasis. Define any terms you introduce which may be unknown to somebody learning about personal finance by the same time and aim for slightly higher than the amount of words given in wordCount. When web search is enabled, use it to find current statistics, regulations, and best practices from authoritative Canadian sources. Avoid repeating yourself and no awkward metaphors or casual jokes, should be slightly warm but not too much.'
               },
               { role: 'user', content: sectionPrompt }
             ],
-            temperature: 0.5,
-            p: 0.75,
-            k: 0,
-            stream: false
+            temperature: 0.5
           });
 
           const sectionText = sectionResponse.message.content[0].text.trim();
           
-          compiledContent += `\n\n## ${section.title}\n\n${sectionText}`;
+          compiledContent += `${sectionText}`;
           
           if (index < sections.length - 1) {
             compiledContent += '\n\n---\n';
@@ -180,7 +190,7 @@ MARKDOWN FORMATTING REQUIREMENTS:
     const freeChatMessages = [
       {
         role: 'system',
-        content: 'You are a Canadian finance content writer creating clear, structured answers using real Canadian context and inline citations.'
+        content: 'You are a Canadian finance content writer creating clear, structured answers using real Canadian context and inline citations. When web search is enabled, use it to find current and accurate information from authoritative Canadian sources. Always include proper citations for information obtained through web search.'
       },
       {
         role: 'user',
@@ -189,12 +199,8 @@ MARKDOWN FORMATTING REQUIREMENTS:
     ];
 
     const response = await cohere.chat({
-      model: 'command-a-03-2025',
-      messages: freeChatMessages,
-      temperature: 0.5,
-      p: 0.75,
-      k: 0,
-      stream: false
+      ...chatOptions,
+      messages: freeChatMessages
     });
 
     return NextResponse.json({ content: response.message.content[0].text });

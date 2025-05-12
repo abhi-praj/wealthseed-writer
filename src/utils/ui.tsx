@@ -107,8 +107,17 @@ Card.displayName = 'Card';
 
 export const Checkbox = React.forwardRef<
   HTMLInputElement,
-  React.InputHTMLAttributes<HTMLInputElement>
->(({ className, ...props }, ref) => {
+  React.InputHTMLAttributes<HTMLInputElement> & {
+    onCheckedChange?: (checked: boolean) => void;
+  }
+>(({ className, onCheckedChange, ...props }, ref) => {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    // Call the original onChange if it exists
+    props.onChange?.(event);
+    // Call onCheckedChange with the new checked value if it exists
+    onCheckedChange?.(event.target.checked);
+  };
+
   return (
     <input
       type="checkbox"
@@ -116,6 +125,7 @@ export const Checkbox = React.forwardRef<
         'h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-2',
         className
       )}
+      onChange={onCheckedChange ? handleChange : props.onChange}
       ref={ref}
       {...props}
     />
@@ -131,7 +141,7 @@ export const Tabs = React.forwardRef<
     value?: string;
     onValueChange?: (value: string) => void;
   }
->(({ className, defaultValue, value, onValueChange, ...props }, ref) => {
+>(({ className, defaultValue, value, ...props }, ref) => {
   const [selectedTab, setSelectedTab] = React.useState(value || defaultValue);
 
   React.useEffect(() => {
@@ -139,11 +149,6 @@ export const Tabs = React.forwardRef<
       setSelectedTab(value);
     }
   }, [value]);
-
-  const handleValueChange = (newValue: string) => {
-    setSelectedTab(newValue);
-    onValueChange?.(newValue);
-  };
 
   return (
     <div

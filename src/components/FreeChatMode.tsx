@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Textarea, Card } from '../utils/ui';
+import { Button, Textarea, Card, Checkbox, Label } from '../utils/ui';
 
 
 interface FreeChatModeProps {
@@ -13,6 +13,7 @@ export default function FreeChatMode({ apiKey }: FreeChatModeProps) {
   const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [enableWebSearch, setEnableWebSearch] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +31,8 @@ export default function FreeChatMode({ apiKey }: FreeChatModeProps) {
         },
         body: JSON.stringify({
           prompt: prompt,
-          mode: 'free-chat'
+          mode: 'free-chat',
+          enableWebSearch: enableWebSearch
         })
       });
 
@@ -58,6 +60,16 @@ export default function FreeChatMode({ apiKey }: FreeChatModeProps) {
           rows={5}
           className="w-full text-black"
         />
+        <div className="flex items-center space-x-2 my-2">
+          <Checkbox 
+            id="enableWebSearch" 
+            checked={enableWebSearch}
+            onCheckedChange={(checked) => setEnableWebSearch(checked as boolean)}
+          />
+          <Label htmlFor="enableWebSearch" className="cursor-pointer">
+            Enable web search for up-to-date information
+          </Label>
+        </div>
         <Button type="submit" disabled={isLoading || !prompt.trim()}>
           {isLoading ? 'Generating...' : 'Generate Content'}
         </Button>
