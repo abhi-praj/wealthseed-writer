@@ -199,7 +199,7 @@ MARKDOWN FORMATTING REQUIREMENTS:
 
     const response = await cohere.chat({
       ...chatOptions,
-      // @ts-ignore - Messages structure works with Cohere API
+      // @ts-expect-error - Messages structure works with Cohere API
       messages: freeChatMessages
     });
 
