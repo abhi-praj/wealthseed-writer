@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# How to Run the Project
 
-## Getting Started
+Follow these steps to get the project running on your computer.
 
-First, run the development server:
+---
 
+## 1. Clone the Repository
+
+1. Open **Terminal** (Mac) or **Command Prompt / PowerShell** (Windows).
+2. Run this command:
+   ```bash
+   git clone https://github.com/abhi-praj/wealthseed-writer.git
+   ```
+
+3. Move into the project folder:
+   ```bash
+   cd wealthseed-writer
+   ```
+
+## 2. Install Node.js
+
+1. Go to https://nodejs.org.
+2. Download the LTS version (Long-Term Support).
+3. Install it with the default settings.
+
+## 3. Install Dependencies
+
+Run this command inside the project folder:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 4. Build the Project
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 5. Start the Project
 
-## Learn More
+```bash
+npm run start
+```
 
-To learn more about Next.js, take a look at the following resources:
+## 6. Open the App
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+After running the command above, you'll see a line like:
+```
+Server running at http://localhost:3000
+```
+Open that URL in your browser.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 7. Get the API Key
 
-## Deploy on Vercel
+1. Ask me for the Cohere API key.
+2. Enter it into the app when prompted.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 8. Have fun!
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Let me know ASAP if you run into any issues
